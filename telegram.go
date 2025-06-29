@@ -37,6 +37,36 @@ var sessionsMu sync.RWMutex
 // allowedUsers stores the set of users who are allowed to use the bot.
 var allowedUsers = make(map[int64]bool)
 
+func sendLongMessage(ctx *th.Context, userID telego.ChatID, text string, parseMode string) error {
+	const maxMessageLength = 3072 // Telegram message length limit 4096
+
+	for len(text) > 0 {
+		chunk := text
+		if len(chunk) > maxMessageLength {
+			chunk = text[:maxMessageLength]
+			// Try to find a good breaking point (e.g., end of a sentence or paragraph)
+			// to avoid breaking markdown entities.
+			lastNewline := strings.LastIndex(chunk, "\n")
+			if lastNewline != -1 && lastNewline > maxMessageLength/2 { // Ensure it's not too close to the beginning
+				chunk = chunk[:lastNewline]
+			} else {
+				// If no newline, try to break at the last space
+				lastSpace := strings.LastIndex(chunk, " ")
+				if lastSpace != -1 && lastSpace > maxMessageLength/2 {
+					chunk = chunk[:lastSpace]
+				}
+			}
+		}
+
+		_, err := ctx.Bot().SendMessage(ctx, tu.Message(userID, chunk).WithParseMode(parseMode))
+		if err != nil {
+			return err
+		}
+		text = text[len(chunk):]
+	}
+	return nil
+}
+
 // StartBot initializes and starts the Telegram bot.
 func StartBot() {
 	botToken := os.Getenv("BOT_API_TOKEN")
@@ -288,7 +318,7 @@ func StartBot() {
 			return err
 		}
 
-		_, err = ctx.Bot().SendMessage(ctx, tu.Message(tu.ID(userID), response).WithParseMode(telego.ModeMarkdown))
+		err = sendLongMessage(ctx, tu.ID(userID), response, telego.ModeMarkdown)
 		if err != nil {
 			log.Printf("Failed to send message to user %d: %v", userID, err)
 		}
