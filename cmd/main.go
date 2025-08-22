@@ -24,7 +24,7 @@ func main() {
 
 	bolt, err := storage.NewStorage(cfg.StoragePath)
 	if err != nil {
-
+		log.Fatal(err)
 	}
 
 	tgBot, err := telego.NewBot(cfg.BotToken, telego.WithDefaultLogger(cfg.Debug, true))

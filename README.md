@@ -25,11 +25,12 @@ docker build -t gemini-chat-tg-bot:latest .
 
 ### 3. Configure Environment Variables
 
-The bot requires three environment variables to function:
+The bot requires four environment variables to function:
 
 *   `BOT_API_TOKEN`: Your Telegram Bot API Token. You can get this by talking to [BotFather on Telegram](https://t.me/botfather).
 *   `GEMINI_API_KEY`: Your Google Gemini API Key. Obtain this from [Google AI Studio](https://aistudio.google.com/app/apikey) or the [Google Cloud Console](https://console.cloud.google.com/apis/credentials).
 *   `ALLOWED_USERS`: A comma-separated list of Telegram User IDs (numeric) who are allowed to use the bot.
+*   `STORAGE_PATH`: The file path to the BoltDB database file for storing bot data.
 
 It's recommended to add these to your `.bashrc` (or equivalent shell configuration file like `.zshrc`) so they are automatically loaded when you start your terminal session.
 
