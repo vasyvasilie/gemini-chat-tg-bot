@@ -1,3 +1,4 @@
+[![Go](https://github.com/vasyvasilie/gemini-chat-tg-bot/actions/workflows/go.yaml/badge.svg?branch=main)](https://github.com/vasyvasilie/gemini-chat-tg-bot/actions/workflows/go.yaml)
 # Gemini Chat Telegram Bot
 
 This is a Telegram bot that integrates with the Gemini API to provide chat functionalities.
