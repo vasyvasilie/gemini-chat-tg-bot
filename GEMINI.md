@@ -20,7 +20,7 @@ Go
 
 ## Docker Run Command
 To run the Docker container in the background with environment variables passed from the current shell:
-`docker run -d -e BOT_API_TOKEN -e GEMINI_API_KEY -e ALLOWED_USERS gemini-chat-tg-bot:latest`
+`docker run --name gemini-chat-tg-bot -d -v /tmp/bolt.db:/tmp/bolt.db -e STORAGE_PATH -e BOT_API_TOKEN -e GEMINI_API_KEY -e ALLOWED_USERS gemini-chat-tg-bot:latest`
 
 ## Telego Logging Level
 The `telego` library is configured to log at `INFO` level using `telego.WithDefaultLogger(false, true)`.

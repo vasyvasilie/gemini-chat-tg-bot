@@ -9,7 +9,7 @@ RUN go mod download
 
 COPY . .
 
-RUN CGO_ENABLED=0 GOOS=linux go build -gcflags="all=-N -l" -a -o gemini-chat .
+RUN GOOS=linux go build -ldflags '-s -w' -a -o gemini-chat cmd/main.go
 
 # Stage 2: Runner
 FROM alpine:latest

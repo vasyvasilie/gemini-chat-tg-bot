@@ -46,6 +46,7 @@ Add the following lines, replacing the placeholder values with your actual token
 export BOT_API_TOKEN="YOUR_TELEGRAM_BOT_API_TOKEN"
 export GEMINI_API_KEY="YOUR_GOOGLE_GEMINI_API_KEY"
 export ALLOWED_USERS="YOUR_USER_ID_1,YOUR_USER_ID_2"
+export STORAGE_PATH="/tmp/bolt.db"
 ```
 
 After adding the variables, save the file and apply the changes by sourcing your `.bashrc`:
@@ -59,7 +60,7 @@ source ~/.bashrc
 Once the environment variables are set in your shell, you can run the Docker container. The bot will run in the background.
 
 ```bash
-docker run -d -e BOT_API_TOKEN -e GEMINI_API_KEY -e ALLOWED_USERS gemini-chat-tg-bot:latest
+docker run --name gemini-chat-tg-bot -d -v /tmp/bolt.db:/tmp/bolt.db -e STORAGE_PATH -e BOT_API_TOKEN -e GEMINI_API_KEY -e ALLOWED_USERS gemini-chat-tg-bot:latest
 ```
 
 To check the logs of the running container, you can use:
