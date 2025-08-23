@@ -21,7 +21,7 @@ const (
 )
 
 var (
-	requestTimeout            = 10 * time.Second
+	requestTimeout            = 30 * time.Second
 	GeminiTooManyRequestError = errors.New("gemini api error: 429 Too Many Requests")
 	GeminiEmptyAnswer         = errors.New("gemini api error: empty answer")
 )
