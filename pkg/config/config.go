@@ -1,6 +1,7 @@
 package config
 
 import (
+	"fmt"
 	"os"
 	"strconv"
 	"strings"
@@ -67,11 +68,11 @@ func Load() (*Config, error) {
 type ErrMissingEnv string
 
 func (e ErrMissingEnv) Error() string {
-	return string(e) + " environment variable not set"
+	return fmt.Sprintf("%s environment variable not set", string(e))
 }
 
 type ErrInvalidUserID string
 
 func (e ErrInvalidUserID) Error() string {
-	return "invalid user ID in ALLOWED_USERS: " + string(e)
+	return fmt.Sprintf("invalid user ID in ALLOWED_USERS: %s", string(e))
 }

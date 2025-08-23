@@ -22,9 +22,10 @@ type ConversationHistory struct {
 }
 
 type UserSettings struct {
-	UserID    int64
-	ModelName string
-	History   ConversationHistory
+	UserID         int64
+	ModelName      string
+	FavoriteModels []string
+	History        ConversationHistory
 }
 
 type Storage struct {

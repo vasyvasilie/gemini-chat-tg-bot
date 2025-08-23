@@ -64,15 +64,7 @@ func NewBot(ctx context.Context,
 	geminiClient *gemini.Client,
 ) (Bot, error) {
 	// Set bot commands for Telegram UI
-	if err := tgBot.SetMyCommands(ctx, &telego.SetMyCommandsParams{
-		Commands: []telego.BotCommand{
-			{Command: "new", Description: "Start a new chat session"},
-			{Command: "listmodels", Description: "Show available models"},
-			{Command: "setmodel", Description: "Set a model (e.g. /setmodel model-name)"},
-			{Command: "currentmodel", Description: "Show the currently selected model"},
-			{Command: "dbsize", Description: "Show db size"},
-		},
-	}); err != nil {
+	if err := tgBot.SetMyCommands(ctx, &telego.SetMyCommandsParams{Commands: botCommands}); err != nil {
 		return nil, err
 	}
 

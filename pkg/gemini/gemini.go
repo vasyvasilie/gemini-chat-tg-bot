@@ -13,8 +13,9 @@ import (
 )
 
 const (
-	RoleUser  string = "user"
-	RoleModel string = "model"
+	ModelPrefix string = "models/"
+	RoleUser    string = "user"
+	RoleModel   string = "model"
 )
 
 type Client struct {
