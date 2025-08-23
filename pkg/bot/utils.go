@@ -5,6 +5,10 @@ import (
 	"unicode/utf16"
 )
 
+const (
+	MaxMessageSize int = 3500
+)
+
 type Annotation struct {
 	Tag     string
 	Start   int
@@ -197,7 +201,7 @@ func splitTextByNewline(text string, maxSize int) []string {
 func prepareTelegramMessages(text string, annotations []Annotation) ([]TelegramMessage, error) {
 	var messages []TelegramMessage
 	start := 0
-	chunks := splitTextByNewline(text, 3500)
+	chunks := splitTextByNewline(text, MaxMessageSize)
 	for _, chunk := range chunks {
 		chunkAnnotation := prepareChunkEntities(chunk, annotations, start)
 		messages = append(messages, TelegramMessage{

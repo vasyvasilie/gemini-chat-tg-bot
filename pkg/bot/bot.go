@@ -2,7 +2,7 @@ package bot
 
 import (
 	"context"
-	"errors"
+	"fmt"
 	"log"
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
@@ -23,7 +23,7 @@ type Bot interface {
 var _ Bot = &botImpl{}
 
 type botImpl struct {
-	cfg          *config.Config
+	config       *config.Config
 	storage      *storage.Storage
 	tgBotHandler *th.BotHandler
 	tgBotAPI     *tgbotapi.BotAPI
@@ -34,10 +34,10 @@ func (b *botImpl) SendLongMessage(ctx *th.Context, chatID telego.ChatID, text st
 	plainTextAfterMarkup, annotations := parseMarkupInternal(text)
 	tgMessages, err := prepareTelegramMessages(plainTextAfterMarkup, annotations)
 	if err != nil {
-		return err
+		return fmt.Errorf("Cannot prepare telegram messages: %w", err)
 	}
 
-	var mErr error
+	var multiErr error
 	for _, v := range tgMessages {
 		msg := tgbotapi.NewMessage(chatID.ID, v.Text)
 		for _, a := range v.Annotations {
@@ -50,15 +50,15 @@ func (b *botImpl) SendLongMessage(ctx *th.Context, chatID telego.ChatID, text st
 		}
 		_, err = b.tgBotAPI.Send(msg)
 		if err != nil {
-			mErr = multierror.Append(mErr, err)
+			multiErr = multierror.Append(multiErr, err)
 		}
 	}
 
-	return mErr
+	return multiErr
 }
 
 func NewBot(ctx context.Context,
-	cfg *config.Config,
+	config *config.Config,
 	bolt *storage.Storage,
 	tgBot *telego.Bot,
 	geminiClient *gemini.Client,
@@ -78,20 +78,20 @@ func NewBot(ctx context.Context,
 		return nil, err
 	}
 
-	tgBotAPI, err := tgbotapi.NewBotAPI(cfg.BotToken)
+	tgBotAPI, err := tgbotapi.NewBotAPI(config.BotToken)
 	if err != nil {
 		return nil, err
 	}
 
 	bot := &botImpl{
-		cfg:          cfg,
+		config:       config,
 		storage:      bolt,
 		tgBotHandler: tgBotHandler,
 		tgBotAPI:     tgBotAPI,
 		geminiClient: geminiClient,
 	}
-	bot.setupMiddlewares(ctx)
-	bot.setupHandlers(ctx)
+	bot.setupMiddlewares()
+	bot.setupHandlers()
 
 	return bot, nil
 }
@@ -102,26 +102,4 @@ func (b *botImpl) Start() {
 
 func (b *botImpl) Stop() {
 	b.tgBotHandler.Stop()
-}
-
-func (b *botImpl) getUserSettings(userID int64) (*storage.UserSettings, error) {
-	settings, err := b.storage.GetUserSettings(userID)
-	if err == nil {
-		return settings, nil
-	}
-
-	if !errors.Is(err, storage.ErrUserNotFound) {
-		return nil, err
-	}
-
-	settings = &storage.UserSettings{
-		UserID:    userID,
-		ModelName: b.cfg.DefaultModel,
-	}
-
-	if err = b.storage.SaveUserSettings(userID, settings); err != nil {
-		return nil, err
-	}
-
-	return settings, nil
 }

@@ -17,17 +17,17 @@ import (
 )
 
 func main() {
-	cfg, err := config.Load()
+	config, err := config.Load()
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	bolt, err := storage.NewStorage(cfg.StoragePath)
+	bolt, err := storage.NewStorage(config.StoragePath)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	tgBot, err := telego.NewBot(cfg.BotToken, telego.WithDefaultLogger(cfg.Debug, true))
+	tgBot, err := telego.NewBot(config.BotToken, telego.WithDefaultLogger(config.Debug, true))
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -35,12 +35,12 @@ func main() {
 	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer cancel()
 
-	geminiClient, err := gemini.NewClient(ctx, cfg)
+	geminiClient, err := gemini.NewClient(ctx, config, bolt)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	bot, err := botPkg.NewBot(ctx, cfg, bolt, tgBot, geminiClient)
+	bot, err := botPkg.NewBot(ctx, config, bolt, tgBot, geminiClient)
 	if err != nil {
 		log.Fatalf("Failed to create bot handler: %v", err)
 	}

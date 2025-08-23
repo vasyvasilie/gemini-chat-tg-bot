@@ -2,7 +2,9 @@ package gemini
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"time"
 
 	"google.golang.org/api/googleapi"
 	"google.golang.org/api/iterator"
@@ -18,36 +20,49 @@ const (
 	RoleModel   string = "model"
 )
 
+var (
+	requestTimeout            = 10 * time.Second
+	GeminiTooManyRequestError = errors.New("gemini api error: 429 Too Many Requests")
+	GeminiEmptyAnswer         = errors.New("gemini api error: empty answer")
+)
+
 type Client struct {
-	cfg *config.Config
-	ai  *genai.Client
+	config  *config.Config
+	ai      *genai.Client
+	storage *storage.Storage
 }
 
-func NewClient(ctx context.Context, cfg *config.Config) (*Client, error) {
+func NewClient(ctx context.Context, config *config.Config, storage *storage.Storage) (*Client, error) {
 	ai, err := genai.NewClient(ctx, &genai.ClientConfig{
-		APIKey:  cfg.GeminiApiKey,
+		APIKey:  config.GeminiApiKey,
 		Backend: genai.BackendGeminiAPI,
 	})
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("cannot create new gemini client: %w", err)
 	}
 
 	return &Client{
-		cfg: cfg,
-		ai:  ai,
+		config:  config,
+		ai:      ai,
+		storage: storage,
 	}, nil
 }
 
 func (c *Client) GenerateContent(ctx context.Context, history storage.ConversationHistory, model, prompt string) (string, error) {
 	requestContent := prepareRequest(history.Messages, prompt)
 
-	resp, err := c.ai.Models.GenerateContent(ctx, model, requestContent, nil)
+	ctxWithTimeout, cancel := context.WithTimeout(ctx, requestTimeout)
+	defer cancel()
+
+	resp, err := c.ai.Models.GenerateContent(ctxWithTimeout, model, requestContent, nil)
 	if err != nil {
-		if gErr, ok := err.(*googleapi.Error); ok && gErr.Code == 429 {
-			return "", fmt.Errorf("gemini_api_error: 429 Too Many Requests")
+		if googleErr, ok := err.(*googleapi.Error); ok && googleErr.Code == 429 {
+			return "", GeminiTooManyRequestError
 		}
-		return "", err
+
+		return "", fmt.Errorf("gemini api error: %w", err)
 	}
+
 	var responseText string
 	for _, cand := range resp.Candidates {
 		if cand.Content != nil {
@@ -55,6 +70,10 @@ func (c *Client) GenerateContent(ctx context.Context, history storage.Conversati
 				responseText += part.Text
 			}
 		}
+	}
+
+	if len(responseText) == 0 {
+		return "", GeminiEmptyAnswer
 	}
 
 	return responseText, nil
@@ -67,10 +86,11 @@ func (c *Client) ListModels(ctx context.Context) ([]string, error) {
 			break
 		}
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("cannot list models: %w", err)
 		}
 		models = append(models, m.Name)
 	}
+
 	return models, nil
 }
 
@@ -87,7 +107,6 @@ func prepareRequest(history []storage.Message, prompt string) []*genai.Content {
 			Parts: []*genai.Part{{Text: msg.Text}},
 			Role:  role,
 		})
-
 	}
 
 	content = append(content, &genai.Content{
